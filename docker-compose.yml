@@ -1,0 +1,18 @@
+version: "3"
+services:
+  https:
+    image: steveltn/https-portal:1
+    ports:
+      - '3443:443'
+    environment:
+      STAGE: local
+      DOMAINS: 'localhost -> http://host.docker.internal:9090'
+  web:
+    build: .
+    image: slack-utils-app:python
+    ports:
+      - '9090:8080'
+    environment:
+      PORT: 8080
+    volumes:
+      - ./:/app

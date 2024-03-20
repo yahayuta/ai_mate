@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Record and Play Audio</title>
+</head>
+<body>
+    <button id="recordButton">Hold to Record</button>
+    <button id="playButton">Play Recording</button>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        navigator.mediaDevices.getUserMedia({ audio: true })
+            .then(stream => {
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.ondataavailable = event => {
+                    audioChunks.push(event.data);
+                };
+                mediaRecorder.onstop = () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg-3' });
+                    const formData = new FormData();
+                    formData.append("audio_data", audioBlob);
+                    fetch("/record", { method: "POST", body: formData })
+                        .then(response => response.blob())
+                        .then(blob => {
+                            const audioUrl = URL.createObjectURL(blob);
+                            new Audio(audioUrl).play();
+                        }
+                    );
+                    audioChunks = [];
+                };
+            });
+
+        document.getElementById("recordButton").addEventListener("mousedown", () => {
+            mediaRecorder.start();
+        });
+
+        document.getElementById("recordButton").addEventListener("mouseup", () => {
+            mediaRecorder.stop();
+        });
+
+        document.getElementById("playButton").addEventListener("click", () => {
+            fetch("/play")
+                .then(response => response.blob())
+                .then(blob => {
+                    const audioUrl = URL.createObjectURL(blob);
+                    new Audio(audioUrl).play();
+                });
+        });
+    </script>
+</body>
+</html>
