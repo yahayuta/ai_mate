@@ -8,9 +8,10 @@ from openai import OpenAI
 
 OPENAI_TOKEN = os.environ.get('OPENAI_TOKEN', '')
 
-app = Flask(__name__, static_folder='static', template_folder='templates')
+app = Flask(__name__, static_folder='./templates/images', template_folder='templates')
 
 client = OpenAI(api_key=OPENAI_TOKEN)
+filepath = '/tmp/recorded_audio.mp3'
 
 @app.route('/')
 def index():
@@ -21,12 +22,7 @@ def save_audio():
     if request.method == 'POST':
         audio_file = request.files['audio_data']
         if audio_file:
-            static_dir = 'static'
-            if not os.path.exists(static_dir):
-                os.makedirs(static_dir)  # Create the static directory if it doesn't exist
-            filename = 'recorded_audio.mp3'
-            filepath = os.path.join(static_dir, filename)
-            audio_file.save(filepath)  # Save in static folder
+            audio_file.save(filepath)
             current_timestamp = int(time.time())
             timestamp_string = str(current_timestamp)
             url = upload_to_bucket(timestamp_string, filepath, 'ai-mate')  # Upload to Google Cloud Storage
@@ -37,7 +33,7 @@ def save_audio():
 
 @app.route('/play', methods=['GET'])
 def play_audio():
-    return send_file(os.path.join('static', 'recorded_audio.mp3'), as_attachment=True)
+    return send_file(filepath, as_attachment=True)
 
 #  Uploads a file to the Google Cloud Storage bucket
 def upload_to_bucket(blob_name, file_path, bucket_name):
@@ -57,18 +53,18 @@ def upload_to_bucket(blob_name, file_path, bucket_name):
     # Return the public URL of the uploaded file
     return blob.public_url
 
-# 音声TO音声
+# voice to voice
 def openai_voice_to_voice(name, url):
 
     prompt = []
 
-    # Slackからの音声ファイルダウンロード実施
+    # download voice file from storage
     response = requests.get(url, allow_redirects=True, stream=True)
     path = f"/tmp/{name}.mp3"
     with open(path, mode='wb') as f:
         f.write(response.content)
 
-    # 音声ファイルを文字起こしする
+    # do STT
     audio_file = open(path, "rb")
     transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
     text_user = transcript.text
@@ -79,13 +75,13 @@ def openai_voice_to_voice(name, url):
 
     print(prompt)
 
-    # 文字起こししたテキストをAIに送信する
+    # send voice message text to llm
     response = client.chat.completions.create(model="gpt-3.5-turbo", messages=prompt)
     text_assistant = response.choices[0].message.content
 
     print(text_assistant)
 
-    # AIの回答を音声に変換する
+    # do TTS
     response = client.audio.speech.create(model="tts-1", voice="nova", input=text_assistant)
 
     speech_file_path = f"/tmp/{name}_speech.mp3"

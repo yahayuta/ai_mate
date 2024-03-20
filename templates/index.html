@@ -2,10 +2,33 @@
 <html>
 <head>
     <title>Record and Play Audio</title>
+    <style>
+        .button-container {
+            text-align: center; /* Center align the content */
+        }
+        .button-image {
+            cursor: pointer;
+            width: 100px; /* or any size you prefer */
+            height: auto;
+            margin: 10px; /* Adds some space around the images */
+        }
+        /* This will ensure each image (acting as a button) is on its own row */
+        .button-row {
+            margin-bottom: 15px; /* Adds space between the rows */
+        }
+    </style>
 </head>
 <body>
-    <button id="recordButton">Hold to Record</button>
-    <button id="playButton">Play Recording</button>
+    <div class="button-container">
+        <!-- First row for the record button -->
+        <div class="button-row">
+            <img src="images/talk.gif" id="recordButton" class="button-image" alt="Hold to Record">
+        </div>
+        <!-- Second row for the play button -->
+        <div class="button-row">
+            <img src="images/play.gif" id="playButton" class="button-image" alt="Play Recording">
+        </div>
+    </div>
 
     <script>
         let mediaRecorder;
@@ -26,8 +49,7 @@
                         .then(blob => {
                             const audioUrl = URL.createObjectURL(blob);
                             new Audio(audioUrl).play();
-                        }
-                    );
+                        });
                     audioChunks = [];
                 };
             });
