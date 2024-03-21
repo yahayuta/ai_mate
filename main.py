@@ -17,6 +17,10 @@ filepath = '/tmp/recorded_audio.mp3'
 def index():
     return render_template('index.html')
 
+@app.route('/auto')
+def index():
+    return render_template('auto.html')
+    
 @app.route('/record', methods=['POST'])
 def save_audio():
     if request.method == 'POST':
