@@ -18,7 +18,7 @@ def index():
     return render_template('index.html')
 
 @app.route('/auto')
-def index():
+def auto():
     return render_template('auto.html')
     
 @app.route('/record', methods=['POST'])
