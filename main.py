@@ -11,33 +11,25 @@ OPENAI_TOKEN = os.environ.get('OPENAI_TOKEN', '')
 app = Flask(__name__, static_folder='./templates/images', template_folder='templates')
 
 client = OpenAI(api_key=OPENAI_TOKEN)
-filepath = '/tmp/recorded_audio.mp3'
 
 @app.route('/')
 def index():
     return render_template('index.html')
-
-@app.route('/auto')
-def auto():
-    return render_template('auto.html')
     
 @app.route('/record', methods=['POST'])
 def save_audio():
     if request.method == 'POST':
         audio_file = request.files['audio_data']
         if audio_file:
-            audio_file.save(filepath)
             current_timestamp = int(time.time())
             timestamp_string = str(current_timestamp)
+            filepath = f'/tmp/{timestamp_string}_recorded_audio.mp3'
+            audio_file.save(filepath)
             url = upload_to_bucket(timestamp_string, filepath, 'ai-mate')  # Upload to Google Cloud Storage
             print(url)
             speech_file_path = openai_voice_to_voice(timestamp_string, url)
             return send_file(speech_file_path, as_attachment=True)
     return {'status': 'error'}
-
-@app.route('/play', methods=['GET'])
-def play_audio():
-    return send_file(filepath, as_attachment=True)
 
 #  Uploads a file to the Google Cloud Storage bucket
 def upload_to_bucket(blob_name, file_path, bucket_name):

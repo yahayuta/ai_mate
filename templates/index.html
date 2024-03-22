@@ -1,45 +1,17 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Record and Play Audio</title>
-    <style>
-        .button-container {
-            text-align: center; /* Center align the content */
-        }
-        .button-image {
-            cursor: pointer;
-            width: 100px; /* or any size you prefer */
-            height: auto;
-            margin: 10px; /* Adds some space around the images */
-            -webkit-touch-callout: none;
-        }
-        /* This will ensure each image (acting as a button) is on its own row */
-        .button-row {
-            margin-bottom: 15px; /* Adds space between the rows */
-        }
-    </style>
+    <title>AI MATE</title>
 </head>
 <body>
-    <div class="button-container">
-        <!-- First row for the record button -->
-        <div class="button-row">
-            <!-- Replace the image tag with a checkbox input -->
-            <input type="checkbox" id="recordCheckbox" class="button-checkbox">
-            <label for="recordCheckbox">
-                <img src="images/talk.gif" class="button-image" alt="Hold to Record">
-            </label>
-        </div>
-        <!-- Second row for the play button -->
-        <div class="button-row">
-            <img src="images/play.gif" id="playButton" class="button-image" alt="Play Recording">
-        </div>
-        <div><a href="/auto" target="_blank">auto</a></div>
+    <div>
+        <input type="checkbox" id="recordCheckbox">
+        record voice while checked
     </div>
 
     <script>
         let mediaRecorder;
         let audioChunks = [];
-        let isRecording = false;
 
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(stream => {
@@ -64,21 +36,10 @@
         // Event listener for the checkbox change
         document.getElementById("recordCheckbox").addEventListener("change", () => {
             if (document.getElementById("recordCheckbox").checked) {
-                isRecording = true;
                 mediaRecorder.start();
             } else {
-                isRecording = false;
                 mediaRecorder.stop();
             }
-        });
-
-        document.getElementById("playButton").addEventListener("click", () => {
-            fetch("/play")
-                .then(response => response.blob())
-                .then(blob => {
-                    const audioUrl = URL.createObjectURL(blob);
-                    new Audio(audioUrl).play();
-                });
         });
     </script>
 </body>
