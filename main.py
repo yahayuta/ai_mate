@@ -67,7 +67,8 @@ def openai_voice_to_voice(name, url):
 
     print(text_user)
     prompt.append({"role": "system", "content": "あなたは人間なので口語で会話してください"})
-    prompt.append({"role": "user", "content": text_user})
+    text_prompt = f'あなたは人間として振る舞ってください/n回答は必ず口語調にしてください/n以下が話しかけられた内容です/n「{text_user}」'
+    prompt.append({"role": "user", "content": text_prompt})
 
     print(prompt)
 
