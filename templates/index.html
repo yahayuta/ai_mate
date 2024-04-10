@@ -5,9 +5,13 @@
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </head>
 <body>
+    <h1>AI MATE</h1>
     <div>
         <input type="checkbox" id="recordCheckbox">
         record voice while checked
     </div>
+    <div><button id="deleteLogs">delete all chat logs</button></div>
+    <div><button id="showHistory">show all chat logs</button></div>
+    <div id="responseArea"></div>
 </body>
 </html>
