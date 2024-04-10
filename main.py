@@ -3,7 +3,7 @@ import logging
 import requests
 import time
 import model_chat_log
-from flask import Flask, request, send_file, render_template
+from flask import Flask, request, send_file, render_template, jsonify
 from google.cloud import storage
 from openai import OpenAI
 
@@ -41,7 +41,7 @@ def delete_log():
 # show all chat logs
 @app.route('/history', methods=['GET'])
 def history():
-    return jsonify(model_ai_chat_log.get_logs())
+    return jsonify(model_chat_log.get_logs())
     
 #  Uploads a file to the Google Cloud Storage bucket
 def upload_to_bucket(blob_name, file_path, bucket_name):
@@ -92,8 +92,8 @@ def openai_voice_to_voice(name, url):
     print(text_assistant)
 
     # save chat logs
-    model_chat_log.save_log(name, "user", text_user, "char")
-    model_chat_log.save_log(name, "assistant", text_assistant, "char")
+    model_chat_log.save_log("user", text_user)
+    model_chat_log.save_log("assistant", text_assistant)
 
     # do TTS
     response = client.audio.speech.create(model="tts-1", voice="nova", input=text_assistant)

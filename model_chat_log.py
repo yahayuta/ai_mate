@@ -9,7 +9,7 @@ def save_log(role, msg):
 # チャットログロード
 def get_logs():
     client = bigquery.Client()
-    query_job = client.query("SELECT * FROM app.chat_log order by created")
+    query_job = client.query("SELECT * FROM app.chat_log WHERE user_id = 'mate' order by created")
     rows = query_job.result()
     print(rows.total_rows)
     logs = []
