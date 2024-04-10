@@ -29,8 +29,6 @@ COPY . ./
 
 # Install production dependencies.
 RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install google-cloud-storage
-RUN pip install requests
 RUN pip install --upgrade openai
 RUN pip install --upgrade google-cloud-bigquery
 
