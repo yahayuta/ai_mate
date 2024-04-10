@@ -37,6 +37,11 @@ def save_audio():
 def delete_log():
     model_chat_log.delete_logs()
     return {'status': 'success'}
+
+# show all chat logs
+@app.route('/history', methods=['GET'])
+def history():
+    return jsonify(model_ai_chat_log.get_logs())
     
 #  Uploads a file to the Google Cloud Storage bucket
 def upload_to_bucket(blob_name, file_path, bucket_name):
