@@ -32,3 +32,24 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 
+document.getElementById("deleteLogs").addEventListener("click", () => {
+    fetch("/delete")
+        .then(response => response.json())
+        .then(data => {
+            console.log(data);
+            document.getElementById("responseArea").innerHTML = data.status;
+        });
+});
+
+document.getElementById("showHistory").addEventListener("click", () => {
+    fetch("/history")
+    .then(response => response.json())
+    .then(data => {
+        let readableMessages = data.map((msg, index) => {
+            return `role:${msg.role} content:${msg.content}<br>`;
+        }).join('');
+        document.getElementById("responseArea").innerHTML = readableMessages;
+    });
+});
+
+
