@@ -2,6 +2,7 @@ import os
 import logging
 import requests
 import time
+import model_chat_log
 from flask import Flask, request, send_file, render_template
 from google.cloud import storage
 from openai import OpenAI
@@ -31,6 +32,12 @@ def save_audio():
             return send_file(speech_file_path, as_attachment=True)
     return {'status': 'error'}
 
+# delete chat all logs
+@app.route('/delete', methods=['GET'])
+def delete_log():
+    model_chat_log.delete_logs()
+    return {'status': 'success'}
+    
 #  Uploads a file to the Google Cloud Storage bucket
 def upload_to_bucket(blob_name, file_path, bucket_name):
     # Create a Cloud Storage client
@@ -67,6 +74,7 @@ def openai_voice_to_voice(name, url):
 
     print(text_user)
     prompt.append({"role": "system", "content": "あなたは人間なので口語で会話してください"})
+    prompt.extend(model_chat_log.get_logs())
     text_prompt = f'あなたは人間として振る舞ってください/n回答は必ず口語調にしてください/n以下が話しかけられた内容です/n「{text_user}」'
     prompt.append({"role": "user", "content": text_prompt})
 
@@ -77,6 +85,10 @@ def openai_voice_to_voice(name, url):
     text_assistant = response.choices[0].message.content
 
     print(text_assistant)
+
+    # save chat logs
+    model_chat_log.save_log(name, "user", text_user, "char")
+    model_chat_log.save_log(name, "assistant", text_assistant, "char")
 
     # do TTS
     response = client.audio.speech.create(model="tts-1", voice="nova", input=text_assistant)
