@@ -17,17 +17,19 @@ def index():
     return render_template('index.html')
 
 # handle chat with llm
-@app.route('/record', methods=['POST'])
-def save_audio():
-    if request.method == 'POST':
-        audio_file = request.files['audio_data']
-        if audio_file:
-            current_timestamp = int(time.time())
-            timestamp_string = str(current_timestamp)
-            filepath = f'/tmp/{timestamp_string}_recorded_audio.mp3'
-            audio_file.save(filepath)
-            speech_file_path = openai_voice_to_voice(timestamp_string)
-            return send_file(speech_file_path, as_attachment=True)
+@app.route('/voice_chat', methods=['POST'])
+def voice_chat():
+    audio_file = request.files['audio_data']
+    
+    if audio_file:
+        current_timestamp = int(time.time())
+        timestamp_string = str(current_timestamp)
+        filepath = f'/tmp/{timestamp_string}_recorded_audio.mp3'
+        audio_file.save(filepath)
+        speech_file_path = openai_voice_to_voice(timestamp_string)
+        return send_file(speech_file_path, as_attachment=True)
+    
+    print('no audio_file!')
     return {'status': 'error'}
 
 # delete chat all logs

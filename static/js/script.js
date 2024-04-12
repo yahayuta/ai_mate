@@ -11,7 +11,7 @@ navigator.mediaDevices.getUserMedia({ audio: true })
             const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg-3' });
             const formData = new FormData();
             formData.append("audio_data", audioBlob);
-            fetch("/record", { method: "POST", body: formData })
+            fetch("/voice_chat", { method: "POST", body: formData })
                 .then(response => response.blob())
                 .then(blob => {
                     const audioUrl = URL.createObjectURL(blob);
