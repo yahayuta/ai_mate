@@ -64,7 +64,7 @@ def openai_voice_to_voice(name):
     print(prompt)
 
     # send voice message text to llm
-    response = client.chat.completions.create(model="gpt-3.5-turbo", messages=prompt)
+    response = client.chat.completions.create(model="gpt-4o-mini", messages=prompt)
     text_assistant = response.choices[0].message.content
 
     print(text_assistant)
