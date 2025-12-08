@@ -50,4 +50,13 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById("responseArea").innerHTML = readableMessages;
         });
     });
+
+    document.getElementById("runStreamlit").addEventListener("click", () => {
+        fetch("/run_streamlit")
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                document.getElementById("responseArea").innerHTML = data.status;
+            });
+    });
 });

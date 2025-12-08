@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import model_chat_log
+import subprocess
 from flask import Flask, request, send_file, render_template, jsonify
 from openai import OpenAI
 
@@ -42,6 +43,12 @@ def delete_log():
 @app.route('/history', methods=['GET'])
 def history():
     return jsonify(model_chat_log.get_logs())
+
+# run streamlit app
+@app.route('/run_streamlit', methods=['GET'])
+def run_streamlit():
+    subprocess.Popen(['streamlit', 'run', 'app_streamlit.py'])
+    return {'status': 'success'}
 
 # voice to voice
 def openai_voice_to_voice(name):
