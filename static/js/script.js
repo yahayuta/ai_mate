@@ -1,62 +1,139 @@
 let mediaRecorder;
 let audioChunks = [];
-
-navigator.mediaDevices.getUserMedia({ audio: true })
-    .then(stream => {
-        mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.ondataavailable = event => {
-            audioChunks.push(event.data);
-        };
-        mediaRecorder.onstop = () => {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg-3' });
-            const formData = new FormData();
-            formData.append("audio_data", audioBlob);
-            fetch("/voice_chat", { method: "POST", body: formData })
-                .then(response => response.blob())
-                .then(blob => {
-                    const audioUrl = URL.createObjectURL(blob);
-                    new Audio(audioUrl).play();
-                });
-            audioChunks = [];
-        };
-    });
+let isRecording = false;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Event listener for the checkbox change
-    document.getElementById("recordCheckbox").addEventListener("change", () => {
-        if (document.getElementById("recordCheckbox").checked) {
-            mediaRecorder.start();
-        } else {
+    const micBtn = document.getElementById('micBtn');
+    const glowRing = document.getElementById('glowRing');
+    const statusText = document.getElementById('statusText');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    // UI Buttons
+    const deleteLogsBtn = document.getElementById('deleteLogs');
+    const runStreamlitBtn = document.getElementById('runStreamlit');
+    const showHistoryBtn = document.getElementById('showHistory');
+
+    // Request permissions early
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+
+            mediaRecorder.onstop = () => {
+                statusText.innerText = "Thinking...";
+                glowRing.classList.remove('active'); // Stop user record glow
+                glowRing.style.background = "#3b82f6"; // Blueish for thinking
+                glowRing.classList.add('active'); 
+
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mpeg-3' });
+                const formData = new FormData();
+                formData.append("audio_data", audioBlob);
+                
+                // POST to backend
+                fetch("/voice_chat", { method: "POST", body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            statusText.innerText = "AI Speaking...";
+                            glowRing.style.background = "#8b5cf6"; // Purple glow for AI
+                            
+                            // Point audio player to the streaming GET endpoint
+                            audioPlayer.src = `/listen?session_id=${data.session_id}`;
+                        } else {
+                            statusText.innerText = "Error requesting response.";
+                            glowRing.classList.remove('active');
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        statusText.innerText = "Connection Failed";
+                        glowRing.classList.remove('active');
+                    });
+                    
+                audioChunks = [];
+            };
+        })
+        .catch(err => {
+            console.error("Microphone access denied:", err);
+            statusText.innerText = "Mic access required!";
+        });
+
+    // Handle Audio Playback animations
+    audioPlayer.onplay = () => {
+        glowRing.classList.add('active');
+    };
+    audioPlayer.onended = () => {
+        statusText.innerText = "Ready to listen...";
+        glowRing.classList.remove('active');
+        glowRing.style.background = "#8b5cf6"; // Reset color
+    };
+
+    // Push to Talk Events (Mouse & Touch)
+    const startRecording = (e) => {
+        e.preventDefault();
+        if(!mediaRecorder || mediaRecorder.state === 'recording') return;
+        
+        // Interrupt AI if it's currently speaking
+        audioPlayer.pause();
+        audioPlayer.src = "";
+
+        isRecording = true;
+        audioChunks = [];
+        mediaRecorder.start();
+        micBtn.classList.add('recording');
+        glowRing.style.background = "#ef4444"; // Red for recording
+        glowRing.classList.add('active');
+        statusText.innerText = "Listening...";
+    };
+
+    const stopRecording = (e) => {
+        e.preventDefault();
+        if(!isRecording) return;
+        
+        isRecording = false;
+        micBtn.classList.remove('recording');
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
             mediaRecorder.stop();
         }
-    });
+    };
 
-    document.getElementById("deleteLogs").addEventListener("click", () => {
+    // Binding mouse and touch events for Push-To-Talk
+    micBtn.addEventListener('mousedown', startRecording);
+    micBtn.addEventListener('touchstart', startRecording, {passive: false});
+    document.addEventListener('mouseup', stopRecording);
+    document.addEventListener('touchend', stopRecording);
+
+    // Sidebar Controls
+    deleteLogsBtn.addEventListener("click", () => {
+        statusText.innerText = "Clearing logs...";
         fetch("/delete")
             .then(response => response.json())
-            .then(data => {
-                console.log(data);
-                document.getElementById("responseArea").innerHTML = data.status;
+            .then(() => {
+                statusText.innerText = "Logs Cleared!";
+                setTimeout(() => statusText.innerText = "Ready to listen...", 2000);
+            });
+    });
+
+    runStreamlitBtn.addEventListener("click", () => {
+        fetch("/run_streamlit")
+            .then(response => response.json())
+            .then(() => {
+                statusText.innerText = "Streamlit Admin Launched!";
+                setTimeout(() => statusText.innerText = "Ready to listen...", 2000);
             });
     });
     
-    document.getElementById("showHistory").addEventListener("click", () => {
+    showHistoryBtn.addEventListener("click", () => {
+        statusText.innerText = "Check Browser Console for Logs";
         fetch("/history")
-        .then(response => response.json())
-        .then(data => {
-            let readableMessages = data.map((msg, index) => {
-                return `role:${msg.role} content:${msg.content}<br>`;
-            }).join('');
-            document.getElementById("responseArea").innerHTML = readableMessages;
-        });
-    });
-
-    document.getElementById("runStreamlit").addEventListener("click", () => {
-        fetch("/run_streamlit")
             .then(response => response.json())
             .then(data => {
-                console.log(data);
-                document.getElementById("responseArea").innerHTML = data.status;
+                console.log("--- BIGQUERY CHAT HISTORY ---");
+                console.table(data);
+                setTimeout(() => statusText.innerText = "Ready to listen...", 2000);
             });
     });
 });
