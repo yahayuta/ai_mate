@@ -1,48 +1,59 @@
-# ai_mate
+# ✨ AI Mate
 
-A web application for communicating with OpenAI's API using voice messages. This project demonstrates a simple Python web app with voice message support, suitable for deployment on Google Cloud Run.
+A modern, ultra-low latency web application for conversational AI via voice. AI Mate uses the GPT-5.4 family to allow real-time conversational STT/TTS (Speech-to-Text & Text-to-Speech), backed by a beautiful Glassmorphic frontend and a powerful Streamlit Admin Dashboard for persona management and history viewing.
 
-## Features
-- Communicate with OpenAI API
-- Voice message support
-- Simple web interface
+## Core Features
+1. **Ultra-Low Latency Streaming**: Text is streamed directly from the `gpt-5.4-mini` model, chunked, and synthesized into MP3 bytes on the fly. The browser natively plays this HTTP stream without waiting for the full generation payload.
+2. **Glassmorphic Web Interface**: A premium dark-mode graphic UI featuring intuitive Push-To-Talk micro-animations. 
+3. **Streamlit Admin Dashboard**: Launch a dedicated internal dashboard (`/run_streamlit`) to visualize chat logs stored in Google BigQuery, manage your AI's persona parameters (`persona.json`), and clear histories dynamically.
+4. **Cloud Run Ready**: Built on Flask and ready for highly scalable container deployments.
 
 ## Requirements
 - Python 3.8+
 - [OpenAI API key](https://platform.openai.com/)
-- Google Cloud SDK (for deployment)
+- Google Cloud SDK (for BigQuery logs and Cloud Run deployment)
 
 ## Installation
+
 1. Clone this repository:
    ```sh
    git clone https://github.com/yourusername/ai_mate.git
    cd ai_mate
    ```
+
 2. Install dependencies:
    ```sh
    pip install -r requirements.txt
    ```
 
 ## Usage
-1. Set your OpenAI API key as an environment variable:
+
+1. Set your OpenAI token as an environment variable (note: the code expects `OPENAI_TOKEN`):
    ```sh
-   $env:OPENAI_API_KEY="your-api-key"  # PowerShell
+   $env:OPENAI_TOKEN="your-api-key"   # PowerShell
    # or
-   export OPENAI_API_KEY="your-api-key" # Bash
+   export OPENAI_TOKEN="your-api-key" # Bash/Zsh
    ```
-2. Run the application locally:
+
+2. Run the Flash application locally:
    ```sh
    python main.py
    ```
-3. Open your browser and go to `http://localhost:5000`.
+
+3. Open your browser and go to `http://localhost:8080`.
+
+4. **(Optional)** Open the Streamlit Admin dashboard by clicking the `Admin` gear icon in the footer, or navigating directly to `http://localhost:8501`.
 
 ## Deployment
+
 To deploy on Google Cloud Run:
-1. Make sure you are authenticated with Google Cloud and have set your project:
+
+1. Make sure you are authenticated with Google Cloud and have set your project (this is also required for the BigQuery logger):
    ```sh
    gcloud auth login
    gcloud config set project YOUR_PROJECT_ID
    ```
+
 2. Deploy using the following command (replace parameters as needed):
    ```sh
    gcloud run deploy ai-mate --allow-unauthenticated --region=asia-northeast1 --project=YOUR_PROJECT_ID --source .
