@@ -209,3 +209,36 @@ footer {
     color: var(--primary);
     border-color: var(--primary);
 }
+
+.voice-selector {
+    margin-top: 0.8rem;
+    display: flex;
+    justify-content: center;
+}
+
+.glass-select {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text-muted);
+    padding: 0.4rem 1rem;
+    font-size: 0.85rem;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    text-align: center;
+}
+
+.glass-select:focus, .glass-select:hover {
+    color: white;
+    border-color: var(--primary);
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.glass-select option {
+    background: #1e1b4b;
+    color: white;
+}

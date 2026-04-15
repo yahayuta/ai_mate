@@ -36,6 +36,7 @@ def voice_chat():
 @app.route('/listen', methods=['GET'])
 def listen():
     session_id = request.args.get("session_id")
+    target_voice = request.args.get("voice", "nova")
     if not session_id:
         return {'status': 'error', 'message': 'Missing session ID'}, 400
         
@@ -45,7 +46,7 @@ def listen():
         
     def generate():
         try:
-            for chunk in openai_voice_to_voice_stream(filepath):
+            for chunk in openai_voice_to_voice_stream(filepath, target_voice):
                 if chunk:
                     yield chunk
         finally:
@@ -72,7 +73,7 @@ def run_streamlit():
     return {'status': 'success'}
 
 # voice to voice streaming generator
-def openai_voice_to_voice_stream(filepath):
+def openai_voice_to_voice_stream(filepath, target_voice="nova"):
     prompt = []
 
     # do STT
@@ -124,7 +125,7 @@ def openai_voice_to_voice_stream(filepath):
                 if tts_text:
                     audio_response = client.audio.speech.create(
                         model="tts-1", 
-                        voice="nova", 
+                        voice=target_voice, 
                         input=tts_text,
                         response_format="mp3"
                     )
@@ -136,7 +137,7 @@ def openai_voice_to_voice_stream(filepath):
     if tts_text:
         audio_response = client.audio.speech.create(
             model="tts-1", 
-            voice="nova", 
+            voice=target_voice, 
             input=tts_text,
             response_format="mp3"
         )
