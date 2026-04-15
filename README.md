@@ -5,8 +5,9 @@ A modern, ultra-low latency web application for conversational AI via voice. AI 
 ## Core Features
 1. **Ultra-Low Latency Streaming**: Text is streamed directly from the `gpt-5.4-mini` model, chunked, and synthesized into MP3 bytes on the fly. The browser natively plays this HTTP stream without waiting for the full generation payload.
 2. **Glassmorphic Web Interface**: A premium dark-mode graphic UI featuring intuitive Push-To-Talk micro-animations. 
-3. **Streamlit Admin Dashboard**: Launch a dedicated internal dashboard (`/run_streamlit`) to visualize chat logs stored in Google BigQuery, manage your AI's persona parameters (`persona.json`), and clear histories dynamically.
-4. **Cloud Run Ready**: Built on Flask and ready for highly scalable container deployments.
+3. **Animated AI Avatar**: Features a beautiful 2D digital avatar that automatically synchronizes its mouth movements and body bobbing to the generated speech audio stream in real-time.
+4. **Streamlit Admin Dashboard**: Launch a dedicated internal dashboard (`/run_streamlit`) to visualize chat logs stored in Google BigQuery, manage your AI's persona parameters (`persona.json`), and clear histories dynamically.
+5. **Cloud Run Ready**: Built on Flask and ready for highly scalable container deployments.
 
 ## Requirements
 - Python 3.8+
@@ -35,7 +36,7 @@ A modern, ultra-low latency web application for conversational AI via voice. AI 
    export OPENAI_TOKEN="your-api-key" # Bash/Zsh
    ```
 
-2. Run the Flash application locally:
+2. Run the Flask application locally:
    ```sh
    python main.py
    ```

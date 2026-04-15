@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const glowRing = document.getElementById('glowRing');
     const statusText = document.getElementById('statusText');
     const audioPlayer = document.getElementById('audioPlayer');
+    const aiAvatar = document.getElementById('aiAvatar');
 
     // UI Buttons
     const deleteLogsBtn = document.getElementById('deleteLogs');
@@ -61,14 +62,31 @@ document.addEventListener('DOMContentLoaded', function() {
             statusText.innerText = "Mic access required!";
         });
 
+    let talkingInterval = null;
+    let isMouthOpen = false;
+
     // Handle Audio Playback animations
     audioPlayer.onplay = () => {
         glowRing.classList.add('active');
+        if (aiAvatar) {
+            aiAvatar.classList.add('talking');
+            // Toggle mouth open and closed every 180ms
+            talkingInterval = setInterval(() => {
+                isMouthOpen = !isMouthOpen;
+                aiAvatar.src = isMouthOpen ? '/static/images/avatar_open.png' : '/static/images/avatar.png';
+            }, 180);
+        }
     };
     audioPlayer.onended = () => {
         statusText.innerText = "Ready to listen...";
         glowRing.classList.remove('active');
         glowRing.style.background = "#8b5cf6"; // Reset color
+        if (aiAvatar) {
+            aiAvatar.classList.remove('talking');
+            clearInterval(talkingInterval);
+            aiAvatar.src = '/static/images/avatar.png';
+            isMouthOpen = false;
+        }
     };
 
     // Push to Talk Events (Mouse & Touch)
@@ -86,6 +104,12 @@ document.addEventListener('DOMContentLoaded', function() {
         micBtn.classList.add('recording');
         glowRing.style.background = "#ef4444"; // Red for recording
         glowRing.classList.add('active');
+        if (aiAvatar) {
+            aiAvatar.classList.remove('talking');
+            clearInterval(talkingInterval);
+            aiAvatar.src = '/static/images/avatar.png';
+            isMouthOpen = false;
+        }
         statusText.innerText = "Listening...";
     };
 
