@@ -1,4 +1,5 @@
 import base64
+import os
 
 import pytest
 
@@ -95,7 +96,8 @@ def test_save_log_uses_parameters(monkeypatch):
 
 def test_listen_ignores_unknown_voice(client, monkeypatch, tmp_path):
     used = []
-    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda path, voice: used.append(voice) or iter([b"x"]))
+    monkeypatch.setattr(main, "transcribe", lambda path: "hello")
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda text, voice: used.append(voice) or iter([b"x"]))
     sid = "1700000000_abcdef"
     open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
     r = client.get(f"/listen?session_id={sid}&voice=../../evil", headers=basic("pw-test"))
@@ -105,9 +107,43 @@ def test_listen_ignores_unknown_voice(client, monkeypatch, tmp_path):
 
 def test_listen_passes_selected_voice(client, monkeypatch):
     used = []
-    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda path, voice: used.append(voice) or iter([b"x"]))
+    monkeypatch.setattr(main, "transcribe", lambda path: "hello")
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda text, voice: used.append(voice) or iter([b"x"]))
     sid = "1700000000_abcdee"
     open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
     r = client.get(f"/listen?session_id={sid}&voice=onyx", headers=basic("pw-test"))
     r.get_data()
     assert used == ["onyx"]
+
+
+def test_listen_returns_400_for_too_short_audio(client, monkeypatch):
+    from openai import BadRequestError
+
+    def too_short(path):
+        # Build the SDK error without an HTTP response object (its constructor
+        # signature differs between openai versions).
+        err = BadRequestError.__new__(BadRequestError)
+        Exception.__init__(err, "Audio file is too short. Minimum audio length is 0.1 seconds.")
+        raise err
+
+    streamed = []
+    monkeypatch.setattr(main, "transcribe", too_short)
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda text, voice: streamed.append(text) or iter([b"x"]))
+    sid = "1700000000_abcded"
+    path = f"/tmp/{sid}_recorded_audio.mp3"
+    open(path, "wb").write(b"a")
+    r = client.get(f"/listen?session_id={sid}", headers=basic("pw-test"))
+    assert r.status_code == 400
+    assert r.get_json()["status"] == "error"
+    assert streamed == []
+    assert not os.path.exists(path)
+
+
+def test_listen_streams_transcribed_text(client, monkeypatch):
+    seen = []
+    monkeypatch.setattr(main, "transcribe", lambda path: "konnichiwa")
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda text, voice: seen.append(text) or iter([b"x"]))
+    sid = "1700000000_abcdec"
+    open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
+    r = client.get(f"/listen?session_id={sid}", headers=basic("pw-test"))
+    assert r.get_data() == b"x" and seen == ["konnichiwa"]
