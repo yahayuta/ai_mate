@@ -91,3 +91,23 @@ def test_save_log_uses_parameters(monkeypatch):
     sql, cfg = calls[0]
     assert evil not in sql
     assert {p.name: p.value for p in cfg.query_parameters} == {"message": evil, "role": "user"}
+
+
+def test_listen_ignores_unknown_voice(client, monkeypatch, tmp_path):
+    used = []
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda path, voice: used.append(voice) or iter([b"x"]))
+    sid = "1700000000_abcdef"
+    open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
+    r = client.get(f"/listen?session_id={sid}&voice=../../evil", headers=basic("pw-test"))
+    r.get_data()
+    assert r.status_code == 200 and used == ["nova"]
+
+
+def test_listen_passes_selected_voice(client, monkeypatch):
+    used = []
+    monkeypatch.setattr(main, "openai_voice_to_voice_stream", lambda path, voice: used.append(voice) or iter([b"x"]))
+    sid = "1700000000_abcdee"
+    open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
+    r = client.get(f"/listen?session_id={sid}&voice=onyx", headers=basic("pw-test"))
+    r.get_data()
+    assert used == ["onyx"]
