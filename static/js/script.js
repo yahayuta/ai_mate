@@ -79,6 +79,14 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 180);
         }
     };
+    // /listen answers 400 when the recording could not be transcribed (e.g. a quick tap)
+    audioPlayer.onerror = () => {
+        if (!audioPlayer.getAttribute('src')) return; // cleared on purpose when recording starts
+        statusText.innerText = "Couldn't hear you. Hold the button a bit longer.";
+        glowRing.classList.remove('active');
+        glowRing.style.background = "#8b5cf6";
+        setTimeout(() => statusText.innerText = "Ready to listen...", 2500);
+    };
     audioPlayer.onended = () => {
         statusText.innerText = "Ready to listen...";
         glowRing.classList.remove('active');

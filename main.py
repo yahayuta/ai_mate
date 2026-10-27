@@ -5,7 +5,7 @@ import model_chat_log
 import security
 import subprocess
 from flask import Flask, request, send_file, render_template, jsonify, Response, stream_with_context
-from openai import OpenAI
+from openai import OpenAI, BadRequestError
 import json
 import uuid
 
@@ -52,10 +52,19 @@ def listen():
     filepath = f'/tmp/{session_id}_recorded_audio.mp3'
     if not os.path.exists(filepath):
         return {'status': 'error', 'message': 'Audio file not found'}, 404
-        
+
+    # Transcribe before streaming starts, so a bad recording (for example a
+    # quick tap that is shorter than 0.1 s) returns 400 instead of a 500 traceback.
+    try:
+        text_user = transcribe(filepath)
+    except BadRequestError as e:
+        os.remove(filepath)
+        print(f"Transcription rejected: {getattr(e, 'message', e)}")
+        return {'status': 'error', 'message': 'Could not understand the recording. Hold the button a little longer and try again.'}, 400
+
     def generate():
         try:
-            for chunk in openai_voice_to_voice_stream(filepath, target_voice):
+            for chunk in openai_voice_to_voice_stream(text_user, target_voice):
                 if chunk:
                     yield chunk
         finally:
@@ -81,14 +90,15 @@ def run_streamlit():
     subprocess.Popen(['streamlit', 'run', 'app_streamlit.py'])
     return {'status': 'success'}
 
-# voice to voice streaming generator
-def openai_voice_to_voice_stream(filepath, target_voice="nova"):
-    prompt = []
-
-    # do STT
+# speech to text
+def transcribe(filepath):
     with open(filepath, "rb") as audio_file:
         transcript = client.audio.transcriptions.create(model="whisper-1", file=audio_file)
-    text_user = transcript.text
+    return transcript.text
+
+# voice to voice streaming generator
+def openai_voice_to_voice_stream(text_user, target_voice="nova"):
+    prompt = []
 
     # Load Persona from file
     default_persona = "あなたは人間なので口語で会話してください"
