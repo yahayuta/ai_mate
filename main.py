@@ -2,6 +2,7 @@ import os
 import logging
 import time
 import model_chat_log
+import security
 import subprocess
 from flask import Flask, request, send_file, render_template, jsonify, Response, stream_with_context
 from openai import OpenAI
@@ -13,6 +14,9 @@ OPENAI_TOKEN = os.environ.get('OPENAI_TOKEN', '')
 app = Flask(__name__, static_folder='static', template_folder='templates')
 
 client = OpenAI(api_key=OPENAI_TOKEN)
+
+# Require authentication on every request (see security.py)
+app.before_request(security.check_request)
 
 # open web interface
 @app.route('/')
@@ -36,8 +40,8 @@ def voice_chat():
 @app.route('/listen', methods=['GET'])
 def listen():
     session_id = request.args.get("session_id")
-    if not session_id:
-        return {'status': 'error', 'message': 'Missing session ID'}, 400
+    if not security.is_valid_session_id(session_id):
+        return {'status': 'error', 'message': 'Missing or invalid session ID'}, 400
         
     filepath = f'/tmp/{session_id}_recorded_audio.mp3'
     if not os.path.exists(filepath):
@@ -55,7 +59,7 @@ def listen():
     return Response(stream_with_context(generate()), mimetype="audio/mpeg")
 
 # delete chat all logs
-@app.route('/delete', methods=['GET'])
+@app.route('/delete', methods=['POST'])
 def delete_log():
     model_chat_log.delete_logs()
     return {'status': 'success'}
@@ -66,7 +70,7 @@ def history():
     return jsonify(model_chat_log.get_logs())
 
 # run streamlit app
-@app.route('/run_streamlit', methods=['GET'])
+@app.route('/run_streamlit', methods=['POST'])
 def run_streamlit():
     subprocess.Popen(['streamlit', 'run', 'app_streamlit.py'])
     return {'status': 'success'}
@@ -156,4 +160,5 @@ if __name__ != '__main__':
     app.logger.setLevel(gunicorn_logger.level)
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", port=8080, debug=True)
+    # Debug mode is opt-in for local runs: FLASK_DEBUG=1
+    app.run(host="0.0.0.0", port=8080, debug=os.environ.get("FLASK_DEBUG") == "1")
