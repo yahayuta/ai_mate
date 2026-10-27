@@ -60,6 +60,19 @@ To deploy on Google Cloud Run:
    gcloud run deploy ai-mate --allow-unauthenticated --region=asia-northeast1 --project=YOUR_PROJECT_ID --source .
    ```
 
+3. Set `APP_PASSWORD` on the service. Every request needs HTTP Basic auth with this password (any user name); the browser asks for it once. Without it, the app refuses all requests on Cloud Run.
+   ```sh
+   gcloud run services update ai-mate --region=asia-northeast1 --update-env-vars APP_PASSWORD=<long random string>
+   ```
+
+### Security
+
+- HTTP Basic auth on every route (`APP_PASSWORD`). Locally, auth is skipped when `APP_PASSWORD` is unset.
+- `/voice_chat`, `/delete` and `/run_streamlit` also require the `X-Requested-With: fetch` header, so another site cannot trigger them with the browser's saved credentials. `/delete` and `/run_streamlit` are POST only.
+- `/listen` only accepts session IDs in the format the server issues, so the value cannot point outside the temp folder.
+- Chat logs are written to BigQuery with named query parameters.
+- Run the tests with `pip install -r requirements.txt pytest google-cloud-bigquery && pytest -q`.
+
 ## Contributing
 Contributions are welcome! Please open an issue or submit a pull request.
 
