@@ -35,7 +35,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 formData.append("audio_data", audioBlob);
                 
                 // POST to backend
-                fetch("/voice_chat", { method: "POST", body: formData })
+                fetch("/voice_chat", { method: "POST", body: formData, headers: { "X-Requested-With": "fetch" } })
                     .then(response => response.json())
                     .then(data => {
                         if (data.status === 'success') {
@@ -135,7 +135,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Sidebar Controls
     deleteLogsBtn.addEventListener("click", () => {
         statusText.innerText = "Clearing logs...";
-        fetch("/delete")
+        fetch("/delete", { method: "POST", headers: { "X-Requested-With": "fetch" } })
             .then(response => response.json())
             .then(() => {
                 statusText.innerText = "Logs Cleared!";
@@ -144,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     runStreamlitBtn.addEventListener("click", () => {
-        fetch("/run_streamlit")
+        fetch("/run_streamlit", { method: "POST", headers: { "X-Requested-With": "fetch" } })
             .then(response => response.json())
             .then(() => {
                 statusText.innerText = "Streamlit Admin Launched!";

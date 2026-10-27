@@ -3,7 +3,16 @@ from google.cloud import bigquery
 # save chat log
 def save_log(role, msg):
     client = bigquery.Client()
-    query_job = client.query(f'INSERT INTO app.chat_log(user_id,message,role,created) values(\'mate\',\'\'\'{msg}\'\'\',\'{role}\',CURRENT_DATETIME(\'Asia/Tokyo\'))')
+    # Named parameters keep the transcribed / generated text out of the SQL itself
+    job_config = bigquery.QueryJobConfig(query_parameters=[
+        bigquery.ScalarQueryParameter("message", "STRING", msg),
+        bigquery.ScalarQueryParameter("role", "STRING", role),
+    ])
+    query_job = client.query(
+        "INSERT INTO app.chat_log(user_id, message, role, created) "
+        "VALUES ('mate', @message, @role, CURRENT_DATETIME('Asia/Tokyo'))",
+        job_config=job_config,
+    )
     print(query_job)
     
 # load chat logs
