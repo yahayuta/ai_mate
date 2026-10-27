@@ -37,10 +37,17 @@ def test_page_and_history_with_password(client):
     assert r.status_code == 200 and r.get_json() == [{"role": "user", "content": "hi"}]
 
 
-def test_refuses_everything_on_cloud_run_without_password(client, monkeypatch):
+def test_cloud_run_without_password_stays_open_with_warning(client, monkeypatch, capsys):
     monkeypatch.setenv("APP_PASSWORD", "")
     monkeypatch.setenv("K_SERVICE", "ai-mate")
-    assert client.get("/history").status_code == 503
+    assert client.get("/history").status_code == 200
+    assert "APP_PASSWORD is not set" in capsys.readouterr().out
+
+
+def test_fetch_header_still_required_without_password(client, monkeypatch):
+    monkeypatch.setenv("APP_PASSWORD", "")
+    assert client.post("/delete").status_code == 403
+    assert client.post("/delete", headers=FETCH).status_code == 200
 
 
 def test_local_run_without_password_is_allowed(client, monkeypatch):

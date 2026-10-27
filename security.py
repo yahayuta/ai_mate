@@ -1,9 +1,8 @@
 """Access control for the AI Mate web app.
 
-The app is deployed to Cloud Run with public access, so every request
-(including the page and static files) needs HTTP Basic auth with APP_PASSWORD.
-If APP_PASSWORD is not set, requests are allowed only when running locally;
-on Cloud Run (K_SERVICE is set) they are refused.
+The app is deployed to Cloud Run with public access. When APP_PASSWORD is
+set, every request (including the page and static files) needs HTTP Basic auth
+with it. While it is not set, requests are allowed and a warning is logged.
 """
 import hmac
 import os
@@ -28,8 +27,7 @@ def check_request():
     password = os.environ.get("APP_PASSWORD", "")
     if not password:
         if os.environ.get("K_SERVICE"):
-            print("APP_PASSWORD is not set; refusing requests on Cloud Run")
-            return Response("APP_PASSWORD is not configured", 503)
+            print("WARNING: APP_PASSWORD is not set; the app is open to anyone with the URL")
     else:
         auth = request.authorization
         if not auth or not auth.password or not _same(password, auth.password):
