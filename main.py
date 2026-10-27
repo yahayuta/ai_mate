@@ -17,6 +17,12 @@ client = OpenAI(api_key=OPENAI_TOKEN)
 
 # Voices offered in templates/index.html; anything else falls back to "nova"
 TTS_VOICES = {"alloy", "ash", "ballad", "cedar", "coral", "echo", "fable", "marin", "nova", "onyx", "sage", "shimmer", "verse"}
+# tts-1 only accepts these voices; ballad, cedar, marin and verse need gpt-4o-mini-tts
+TTS1_VOICES = {"alloy", "ash", "coral", "echo", "fable", "nova", "onyx", "sage", "shimmer"}
+
+
+def tts_model(voice):
+    return "tts-1" if voice in TTS1_VOICES else "gpt-4o-mini-tts"
 
 # Require authentication on every request (see security.py)
 app.before_request(security.check_request)
@@ -143,7 +149,7 @@ def openai_voice_to_voice_stream(text_user, target_voice="nova"):
                 
                 if tts_text:
                     audio_response = client.audio.speech.create(
-                        model="tts-1", 
+                        model=tts_model(target_voice),
                         voice=target_voice, 
                         input=tts_text,
                         response_format="mp3"
@@ -155,7 +161,7 @@ def openai_voice_to_voice_stream(text_user, target_voice="nova"):
     tts_text = sentence_buffer.strip()
     if tts_text:
         audio_response = client.audio.speech.create(
-            model="tts-1", 
+            model=tts_model(target_voice),
             voice=target_voice, 
             input=tts_text,
             response_format="mp3"

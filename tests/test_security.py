@@ -147,3 +147,36 @@ def test_listen_streams_transcribed_text(client, monkeypatch):
     open(f"/tmp/{sid}_recorded_audio.mp3", "wb").write(b"a")
     r = client.get(f"/listen?session_id={sid}", headers=basic("pw-test"))
     assert r.get_data() == b"x" and seen == ["konnichiwa"]
+
+
+def test_tts_model_matches_voice():
+    assert main.TTS1_VOICES <= main.TTS_VOICES
+    for v in ["nova", "alloy", "coral", "onyx", "shimmer"]:
+        assert main.tts_model(v) == "tts-1"
+    for v in ["ballad", "cedar", "marin", "verse"]:
+        assert main.tts_model(v) == "gpt-4o-mini-tts"
+
+
+def test_stream_uses_model_for_selected_voice(monkeypatch):
+    calls = []
+
+    class Delta:
+        content = "hello."
+
+    class Choice:
+        delta = Delta()
+
+    class Chunk:
+        choices = [Choice()]
+
+    class Audio:
+        def iter_bytes(self, chunk_size=4096):
+            return iter([b"mp3"])
+
+    monkeypatch.setattr(main.client.chat.completions, "create", lambda **kw: iter([Chunk()]))
+    monkeypatch.setattr(main.client.audio.speech, "create", lambda **kw: calls.append((kw["model"], kw["voice"])) or Audio())
+    monkeypatch.setattr(model_chat_log, "get_logs", lambda: [])
+    monkeypatch.setattr(model_chat_log, "save_log", lambda role, text: None)
+    assert list(main.openai_voice_to_voice_stream("hi", "marin")) == [b"mp3"]
+    assert list(main.openai_voice_to_voice_stream("hi", "nova")) == [b"mp3"]
+    assert calls == [("gpt-4o-mini-tts", "marin"), ("tts-1", "nova")]
