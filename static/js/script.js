@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const deleteLogsBtn = document.getElementById('deleteLogs');
     const runStreamlitBtn = document.getElementById('runStreamlit');
     const showHistoryBtn = document.getElementById('showHistory');
+    const voiceSelect = document.getElementById('voiceSelect'); // Added voice selector
 
     // Request permissions early
     navigator.mediaDevices.getUserMedia({ audio: true })
@@ -42,7 +43,8 @@ document.addEventListener('DOMContentLoaded', function() {
                             glowRing.style.background = "#8b5cf6"; // Purple glow for AI
                             
                             // Point audio player to the streaming GET endpoint
-                            audioPlayer.src = `/listen?session_id=${data.session_id}`;
+                            const selectedVoice = voiceSelect ? voiceSelect.value : 'nova';
+                            audioPlayer.src = `/listen?session_id=${data.session_id}&voice=${selectedVoice}`;
                         } else {
                             statusText.innerText = "Error requesting response.";
                             glowRing.classList.remove('active');
